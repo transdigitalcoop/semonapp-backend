@@ -5,36 +5,52 @@ const { generarJWT } = require("../helpers/jwt");
 
 const crearUsuario = async (req, res = response) => {
   try {
+    const {
+      idUcc,
+      primerNombre,
+      segundoNombre,
+      primerApellido,
+      segundoApellido,
+      programa,
+      semestre,
+      identificacion,
+      telefono,
+      correoInstitucional,
+      fechaVinculacion,
+      fechaNacimiento,
+      direccion,
+    } = req.body;
 
-    const { idUcc, primerNombre, segundoNombre, primerApellido, segundoApellido, programa, semestre, identificacion, telefono, correoInstitucional, fechaVinculacion, fechaNacimiento, direccion} = req.body;
-
-    let usuario = await Usuario.findOne({ correoInstitucional, idUcc, identificacion });
+    let usuario = await Usuario.findOne({
+      correoInstitucional,
+      idUcc,
+      identificacion,
+    });
 
     if (usuario) {
-        return res.status(400).json({
-            ok: false,
-            msg: "Un usuario existe con ese correo, id de la universidad o identificación",
-        });
+      return res.status(400).json({
+        ok: false,
+        msg: "Un usuario existe con ese correo, id de la universidad o identificación",
+      });
     }
-
 
     let contraseña = identificacion;
 
     usuario = new Usuario({
-        idUcc,
-        primerNombre,
-        segundoNombre,
-        primerApellido,
-        segundoApellido,
-        programa,
-        semestre,
-        identificacion,
-        telefono,
-        correoInstitucional,
-        fechaVinculacion,
-        fechaNacimiento,
-        direccion,
-        contraseña
+      idUcc,
+      primerNombre,
+      segundoNombre,
+      primerApellido,
+      segundoApellido,
+      programa,
+      semestre,
+      identificacion,
+      telefono,
+      correoInstitucional,
+      fechaVinculacion,
+      fechaNacimiento,
+      direccion,
+      contraseña,
     });
 
     //Encriptar contraseña
@@ -43,18 +59,17 @@ const crearUsuario = async (req, res = response) => {
 
     //Guardar usuario en la base de datos
     await usuario.save();
-    
-     //Generar JWT
-     const token = await generarJWT(usuario.id, usuario.primerNombre);
+
+    //Generar JWT
+    const token = await generarJWT(usuario.id, usuario.primerNombre);
 
     //El status 201 indica que se ha hecho el registro correcto en la base de datos
     res.status(201).json({
       ok: true,
       uid: usuario.id,
       nombre: usuario.primerNombre,
-      token
+      token,
     });
-
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -67,39 +82,36 @@ const crearUsuario = async (req, res = response) => {
 const loginUsuario = async (req, res = response) => {
   const { correoInstitucional, contraseña } = req.body;
 
-  try{
-
-    const usuario = await Usuario.findOne({ correoInstitucional});
+  try {
+    const usuario = await Usuario.findOne({ correoInstitucional });
 
     if (!usuario) {
-        return res.status(400).json({
-            ok: false,
-            msg: "Usuario y contraseña no son correctos",
-        });
+      return res.status(400).json({
+        ok: false,
+        msg: "Usuario y contraseña no son correctos",
+      });
     }
 
     //Confirmar los passwords
     const validPassword = bcrypt.compareSync(contraseña, usuario.contraseña);
 
-    if(!validPassword){
-        return res.status(400).json({
-            ok: false,
-            msg: "Usuario y contraseña no son correctos",
-        });
+    if (!validPassword) {
+      return res.status(400).json({
+        ok: false,
+        msg: "Usuario y contraseña no son correctos",
+      });
     }
 
     //Generar JWT
     const token = await generarJWT(usuario.id, usuario.primerNombre);
 
     res.json({
-        ok: true,
-        uid: usuario.id,
-        nombre: usuario.primerNombre,
-        token
+      ok: true,
+      uid: usuario.id,
+      nombre: usuario.primerNombre,
+      token,
     });
-
-
-  }catch(error){
+  } catch (error) {
     console.log(error);
     res.status(500).json({
       ok: false,
@@ -108,10 +120,15 @@ const loginUsuario = async (req, res = response) => {
   }
 };
 
-const revalidarToken = (req, res = response) => {
+const revalidarToken = async (req, res = response) => {
+  const { uid, name } = req;
+
+  // Generar JWT
+  const token = await generarJWT(uid, name);
+
   res.json({
     ok: true,
-    msg: "renew",
+    token,
   });
 };
 
