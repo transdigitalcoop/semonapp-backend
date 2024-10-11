@@ -18,6 +18,7 @@ app.use(express.json());
 
 //Rutas
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/usuarios', require('./routes/user'));
 
 //Directorio publico
 app.use(express.static('public'));
